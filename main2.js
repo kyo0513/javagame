@@ -38,6 +38,7 @@ let		gMessage1 = null;					 //	表示メッセージ１
 let		gMessage2 = null;					 //	表示メッセージ２
 let		gItem     = 0;						 //	所持アイテム
 let     gItem2    = 0;                       // 所持アイテム2
+let     op        = 0;                       // 開始時説明用
 
 //キー入力関連＋キャラ向き
 const	gKey    = new Uint8Array( 0x100 );	//	キー入力バッファ
@@ -72,10 +73,9 @@ const	gFileMap		= "img/map.png";
 const	gFileMonster	= "img/mons.png";    //元　"img/monster.png";
 const	gFilePlayer		= "img/player.png";
 
-
-const	gMonsterName   = [ "スライム", "うさぎ", "ナイト", "ドラゴン", "魔王" ];	 //モンスター名称
-const	gEncounter     = [ 0, 0, 0, 1, 0, 0, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0 ];	  //敵エンカウント確率(平地が1倍　林が2倍　山が3倍)
-const   gEncounterrate = 24;                                                      //基本エンカウント倍率（低い程高い 基礎は8か16辺り）
+const	gMonsterName   = [ "スライむ", "うさぎ", "盗賊", "ドラゴン", "魔王" ];	 //モンスター名称
+const	gEncounter     = [ 0, 0, 0, 1, 0, 0, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0 ];  //敵エンカウント確率(平地が1倍　林が2倍　山が3倍)
+const   gEncounterrate = 24;                                                  //基本エンカウント倍率（低い程高い 基礎は8か16辺り）
 
 //	マップ<z1>
 const	gMap = [
@@ -106,14 +106,13 @@ const	gMap = [
  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 6, 3, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0,
  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 6, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
- 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,14, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0,
- 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0,
- 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 7, 0, 0, 0, 0, 0, 0, 0, 0,
- 7,15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 3, 3, 0, 0, 0, 0, 0,
- 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7,
+ 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,14, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 7, 0, 0, 0, 0, 0, 0, 0, 0,
+ 7,15, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 3, 3, 0, 0, 0, 0, 0,
+ 7, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 7, 7, 7,
 ];
 
-let   musicon =0;
 const music  = new Audio('yuusou-koushin.mp3');
 const music2 = new Audio('Battle-forHonor.mp3');
 const music3 = new Audio('button01b.mp3');
@@ -147,8 +146,9 @@ function Action()
 		return;
 	}
 
-	if( Math.random() < 0.6 ){							//	「逃げる」成功時  0.5⇒0.6へ
+	if( Math.random() < 0.6 && gEnemyType != 4){		//	「逃げる」成功時  0.5⇒0.6へ
 		SetMessage( "あなたは逃げ出した");
+		console.log(gEnemyType);
 		gPhase = 6;
 		music4.volume = 0.4;
 	    music4.currentTime = 0;
@@ -159,7 +159,6 @@ function Action()
 		music.play();		
 		return;
 	}
-
 	//	「逃げる」失敗時
 	SetMessage( "あなたは逃げ出した　しかし回り込まれた！" );
 }
@@ -202,7 +201,6 @@ function CommandFight()
 	gCursor = 0;
 	SetMessage( "　戦う　　　　　　　　逃げる" );
 }
-
 
 //	戦闘画面描画処理<z8>
 function DrawFight( g )
@@ -247,7 +245,7 @@ function DrawField( g )
 		}
 	}
 
-	//	プレイヤー描画<5>
+	//	プレイヤー描画<z5>
 	g.drawImage( gImgPlayer,
 	             ( gFrame >> 4 & 1 ) * CHRWIDTH, gAngle * CHRHEIGHT, CHRWIDTH, CHRHEIGHT,                //ビットシフトの意味は16で割って余りを省く　&　1　で0か1だけ返している
 	             WIDTH / 2 - CHRWIDTH / 2, HEIGHT / 2 - CHRHEIGHT + TILESIZE / 2, CHRWIDTH, CHRHEIGHT ); //内部カウンタで歩き差分を表示している
@@ -311,25 +309,24 @@ function DrawStatus( g )
 	g.fillText( "Ex", 4, 37 );	DrawTextR( g, gEx, 36, 37 );	//	 Ex
 }
 
-function DrawTextR( g, str, x, y )                              //   文字表示（右揃え後元に戻している）   
+function DrawTextR( g, str, x, y )                              //   文字表示（右揃え表示後元に戻している）   
 {
 	g.textAlign = "right";
 	g.fillText( str, x, y );
 	g.textAlign = "left";
 }
 
-function DrawTile( g, x, y, idx )
+function DrawTile( g, x, y, idx )                               //　座標はドット　描画はタイルなので注意
 {
 	const		ix = ( idx % TILECOLUMN ) * TILESIZE;
 	const		iy = Math.floor( idx / TILECOLUMN ) * TILESIZE;
 	g.drawImage( gImgMap, ix, iy, TILESIZE, TILESIZE, x, y, TILESIZE, TILESIZE );
 }
 
-
 //	ダメージ量算出
 function GetDamage( a )
 {
-	return( Math.floor( a * ( 1 + Math.random() ) ) );	//	攻撃力の１～２倍
+	return( Math.floor( a * ( 1 + Math.random() ) ) );	//	１～２倍の範囲程度
 }
 
 function IsBoss()
@@ -345,7 +342,6 @@ function LoadImage()
 	gImgPlayer  = new Image();	gImgPlayer.src  = gFilePlayer;	//	プレイヤー画像読み込み
 }
 
-//function SetMessage( v1, v2 = null )	//	IE対応
 //function SetMessage( v1, v2 )
 function SetMessage( v1 )               //   メッセージの長さで分割へ変更
 {
@@ -366,7 +362,7 @@ function TickField()
 	}
 	
 	if( gMoveX != 0 || gMoveY != 0 || gMessage1 ){}				//	移動中又はメッセージ表示中の場合
-	else if( gKey[ 37 ] ){	gAngle = 1;	gMoveX = -TILESIZE;	}	//	左
+	else if( gKey[ 37 ] ){	gAngle = 1;	gMoveX = -TILESIZE;	}	//	左（キャラの向きも付与以下同様）
 	else if( gKey[ 38 ] ){	gAngle = 3;	gMoveY = -TILESIZE;	}	//	上
 	else if( gKey[ 39 ] ){	gAngle = 2;	gMoveX =  TILESIZE;	}	//	右
 	else if( gKey[ 40 ] ){	gAngle = 0;	gMoveY =  TILESIZE;	}	//	下
@@ -388,7 +384,6 @@ function TickField()
 	if( Math.abs( gMoveX ) + Math.abs( gMoveY ) == SCROLL ){	//	マス目移動が終わる直前
 		if( m == 8 || m == 9 ){		//	お城
 			gHP = gMHP;										    //	HP全回復
-			//SetMessage( "魔王を倒して！");
 			SetMessage( "魔王を倒してまいれ！HPが回復した。");
 		}
 
@@ -422,13 +417,15 @@ function TickField()
 		}
 
 		if( m == 15 ){AppearEnemy( gMonsterName.length - 1 );}   //ボス処理
-		if(gPlayerX===251&&gPlayerY===156){                      //座標によるイベントも可
+		if(gPlayerX===251&&gPlayerY===156){                      //座標判定（デバッグ用イベント）
 			if(gItem2===0){
 				SetMessage( "勇者よ力を授けよう・・・");
 				AddExp(50);
 				gItem2=1;
-			}
+				//gItem =1;   //デバッグ用で鍵もGET
+			}			
 		}
+
 		///////////////////////////////////////////////////////////////////////////////////////	<z3>	
 		if( Math.random() * gEncounterrate < gEncounter[ m ] ){	      //	ランダムエンカウント（初期位置から離れる程敵が強くなっていく仕組み）
 			let		t = Math.abs( gPlayerX / TILESIZE - START_X ) +
@@ -440,8 +437,8 @@ function TickField()
 				t += 16;								              //	敵レベルを1上昇
 			}
 			t += Math.random() * 8;						              //	敵レベルを0～0.5上昇
-			t = Math.floor( t / 16 );
-			t = Math.min( t, gMonsterName.length - 2 );	              //	上限処理
+			t =  Math.floor( t / 16 );
+			t =  Math.min( t, gMonsterName.length - 2 );	          //	上限処理
 			AppearEnemy( t );
 		}
 	}
@@ -490,8 +487,8 @@ function WmSize()
 	ca.width  = window.innerWidth;				  	//	キャンバスの幅をブラウザの幅へ変更
 	ca.height = window.innerHeight;					//	キャンバスの高さをブラウザの高さへ変更
 	g.imageSmoothingEnabled = g.msImageSmoothingEnabled = SMOOTH;	                    //	補間処理
-	gWidth  = ca.width;
-	gHeight = ca.height;
+	gWidth    = ca.width;
+	gHeight   = ca.height;
 
 	if( gWidth / WIDTH < gHeight / HEIGHT ){        //　縦横比を最適化
 		gHeight = gWidth * HEIGHT / WIDTH;
@@ -521,8 +518,7 @@ function wmTimer()
 	}
 
 	let		d = Math.floor( ( performance.now() - mCurrentStart ) * INTERVAL2 / 1000 ) - mCurrentFrame;
-	//console.log(d+","+mCurrentFrame);
-	if( d > 0 ){                              //60fpsの場合約0.167ms　に到達した場合に描画（早すぎる場合は描画しない）		
+	if( d > 0 ){                              //60fpsの場合約0.0167に到達した場合に描画（早すぎる場合は描画しない）		
 		onTimer( d );                        
 		mCurrentFrame += d;
 	}
@@ -530,7 +526,6 @@ function wmTimer()
 	
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 //	キー入力(DONW)イベント
 window.onkeydown = function( ev )
@@ -550,7 +545,7 @@ window.onkeydown = function( ev )
 
 	if( gPhase == 2 ){				//	戦闘コマンド選択中の場合
 		if( c == 13 || c == 90 ){	//	Enterキー、又はZキーの場合
-			gOrder = Math.floor( Math.random() * 2 );	//	戦闘行動順
+			gOrder = Math.floor( Math.random() * 2 );	//	戦闘行動順(50%先制)
 			Action();				//	戦闘行動処理
 		}else{
 			gCursor = 1 - gCursor;	//	カーソル移動
@@ -575,7 +570,7 @@ window.onkeydown = function( ev )
 		music2.pause();
 		music3.play();
 		music.volume = 0.4;
-		music.loop = true;
+		music.loop   = true;
 		music.play();	
 		return;
 	}
@@ -587,7 +582,7 @@ window.onkeydown = function( ev )
 			music6.play();
 			return;
 		}
-		gPhase = 0;					//	マップ移動フェーズ
+		gPhase = 0;					        //	マップ移動フェーズ
 	}
 
 	if( gPhase == 7 ){
@@ -621,6 +616,10 @@ window.onload = function()
 	window.addEventListener( "resize", function(){ WmSize() } );	//	ブラウザサイズ変更時、WmSize()が呼ばれるよう指示
 	//setInterval( function(){ WmTimer() }, INTERVAL );		//	33ms間隔で、WmTimer()を呼び出すよう指示（約30.3fps）
 	requestAnimationFrame( wmTimer );               //PCパフォーマンスを元に約60fpsへ
+	if(op===0){
+		SetMessage("さぁ冒険のはじまり！魔王を倒す旅に出よう")
+		op=1;
+	}
 }
 
 
